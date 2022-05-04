@@ -1,0 +1,122 @@
+\documentclass[a4paper,10pt]{ltjsarticle}
+
+% プリアンブル
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage[dvipdfmx]{hyperref}
+\usepackage{here}
+\usepackage{amssymb}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{bbm}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage{multirow}
+\usepackage{stmaryrd}
+\usepackage{subfiles}
+\pagestyle{fancy}
+\rhead{Survey by D. Nishiyama on \today}    % ヘッダの右側
+\cfoot{\thepage}                % フッター中央
+\renewcommand{\headrulewidth}{0pt}        % ヘッダの線の太さ:0ptで消える
+
+\newcommand{\bi}[1]{\ensuremath{\boldsymbol{#1}}}
+\newcommand{\propose}{Class-Sensitive}
+\newcommand{\multicell}[2]{\begin{tabular}{c}
+                               #1\\#2
+\end{tabular}}
+
+
+% 転置記号
+\newcommand{\T}{\ensuremath{^{\text{T}}}}
+
+% 図の参照
+\newcommand{\Zu}[1]{図\ref{fig:#1}}
+
+% 表の参照
+\newcommand{\Hyou}[1]{表\ref{tab:#1}}
+\newcommand{\II}{I\hspace{-.1em}I}
+% 式の参照
+\newcommand{\Shiki}[1]{式\eqref{eq:#1}}
+\newcommand{\1}{\mbox{1}\hspace{-0.25em}\mbox{l}}
+\lstset{
+    basicstyle={\ttfamily\small}, %書体の指定
+    frame=tRBl, %フレームの指定
+    framesep=10pt, %フレームと中身（コード）の間隔
+    breaklines=true, %行が長くなった場合の改行
+    linewidth=15cm, %フレームの横幅
+    lineskip=-0.5ex, %行間の調整
+    tabsize=2 %Tabを何文字幅にするかの指定
+}
+
+\theoremstyle{definition}
+\newtheorem{theorem}{定理}
+\newtheorem*{theorem*}{定理}
+\newtheorem{prop}{命題}
+\newtheorem*{prop*}{命題}
+\newtheorem{definition}[theorem]{定義}
+\newtheorem*{definition*}{定義}
+
+\def\hlineb{%
+    \noalign{\ifnum0=`}\fi\hrule \@height \arrayrulewidthb \futurelet
+    \reserved@a\@xhlineb}
+\def\@xhlineb{\ifx\reserved@a\hlineb
+\vskip\doublerulesep
+\vskip-\arrayrulewidthb
+\fi
+\ifnum0=`{\fi}}
+
+\newcommand{\argmax}{\mathop{\rm arg~max}\limits}
+\newcommand{\argmin}{\mathop{\rm arg~min}\limits}
+
+
+%!  心構え
+%!  ・時間を決めて読む
+%!  ・まとめる癖をつける
+
+
+%! 読む順番　パターンA（じっくり）
+%!  1.アブストラクト(何をしたか)、イントロダクション(何をしたいか)
+%!  2.結論(何をしたか・詳細)
+%!  3.実験結果(主張の証明)・議論(良し悪し)
+%!  4.関連研究(他との違い)、メソッド(実験方法)
+
+%! 読む順番　パターンB（ざっくり）
+%!  1.アブストラクト(何をしたか)
+%!  2.イントロダクション(何をしたいか)
+%!  3.結果(主として図)
+
+\title{On Explainability of Graph Neural Networks via Subgraph Explorations\ \cite{yuan2021explainability}}
+\author{Hao Yuan, Haiyang Yu, Jie Wang, Kang Li, Shuiwang Ji}
+\date{2021}
+% Document
+\begin{document}
+    \maketitle
+    \abstract{}
+
+
+    \section{どういう論文？}
+    \cite{li2022explainability}: 「SubgraphXは重要なサブグラフを特定するためにMonte Carlo Tree Searchを採用」
+
+
+    \section{先行研究と比べてどこがすごい？}
+
+
+    \section{技術や方法のポイントはどこ？}
+
+
+    \section{どうやって有効と検証した？}
+
+
+    \section{議論はある？}
+
+
+    \section{次に読むべき論文は？}
+
+
+    \bibliographystyle{apalike}
+    \bibliography{/Users/funami/Documents/Survey/ref}
+\end{document}
