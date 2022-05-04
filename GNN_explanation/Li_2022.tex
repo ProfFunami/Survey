@@ -1,0 +1,289 @@
+\documentclass[a4paper,10pt]{ltjsarticle}
+
+% プリアンブル
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage[dvipdfmx]{hyperref}
+\usepackage{here}
+\usepackage{amssymb}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{bbm}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{Survey by D. Nishiyama on \today}    % ヘッダの右側
+%\cfoot{\thepage}                % フッター中央
+\renewcommand{\headrulewidth}{0pt}        % ヘッダの線の太さ:0ptで消える
+
+\newcommand{\bi}[1]{\ensuremath{\boldsymbol{#1}}}
+\newcommand{\propose}{Class-Sensitive}
+\newcommand{\multicell}[2]{\begin{tabular}{c}
+                               #1\\#2
+\end{tabular}}
+
+
+% 転置記号
+\newcommand{\T}{\ensuremath{^{\text{T}}}}
+
+% 図の参照
+\newcommand{\Zu}[1]{図\ref{fig:#1}}
+
+% 表の参照
+\newcommand{\Hyou}[1]{表\ref{tab:#1}}
+\newcommand{\II}{I\hspace{-.1em}I}
+% 式の参照
+\newcommand{\Shiki}[1]{式\eqref{eq:#1}}
+\newcommand{\1}{\mbox{1}\hspace{-0.25em}\mbox{l}}
+\lstset{
+    basicstyle={\ttfamily\small}, %書体の指定
+    frame=tRBl, %フレームの指定
+    framesep=10pt, %フレームと中身（コード）の間隔
+    breaklines=true, %行が長くなった場合の改行
+    linewidth=15cm, %フレームの横幅
+    lineskip=-0.5ex, %行間の調整
+    tabsize=2 %Tabを何文字幅にするかの指定
+}
+\usepackage{multirow}
+\usepackage{stmaryrd}
+\usepackage{subfiles}
+\theoremstyle{definition}
+\newtheorem{theorem}{定理}
+\newtheorem*{theorem*}{定理}
+\newtheorem{prop}{命題}
+\newtheorem*{prop*}{命題}
+\newtheorem{definition}[theorem]{定義}
+\newtheorem*{definition*}{定義}
+
+\def\hlineb{%
+    \noalign{\ifnum0=`}\fi\hrule \@height \arrayrulewidthb \futurelet
+    \reserved@a\@xhlineb}
+\def\@xhlineb{\ifx\reserved@a\hlineb
+\vskip\doublerulesep
+\vskip-\arrayrulewidthb
+\fi
+\ifnum0=`{\fi}}
+
+\newcommand{\argmax}{\mathop{\rm arg~max}\limits}
+\newcommand{\argmin}{\mathop{\rm arg~min}\limits}
+\title{Explainability in Graph Neural Networks: An Experimental Survey}
+\author{Peibo Li , Yixing Yang , Maurice Pagnucco and Yang Song}
+\date{2022/05/03}
+
+%!  心構え
+%!  ・時間を決めて読む
+%!  ・まとめる癖をつける
+
+
+%! 読む順番　パターンA（じっくり）
+%!  1.アブストラクト(何をしたか)、イントロダクション(何をしたいか)
+%!  2.結論(何をしたか・詳細)
+%!  3.実験結果(主張の証明)・議論(良し悪し)
+%!  4.関連研究(他との違い)、メソッド(実験方法)
+
+%! 読む順番　パターンB（ざっくり）
+%!  1.アブストラクト(何をしたか)
+%!  2.イントロダクション(何をしたいか)
+%!  3.結果(主として図)
+% Document
+\begin{document}
+    \maketitle
+
+    \abstract{グラフニューラルネットワーク(GNN)は、様々な応用分野において、
+    グラフ表現学習のために広く開発されている。しかし、他のニューラルネットワークモデルと同様に、
+    GNNはその背後にあるメカニズムを理解できないというブラックボックス問題に悩まされている。
+    この問題を解決するために、GNNが行う決定を説明するためのGNN説明可能手法がいくつか提案されている。
+    本サーベイでは，最新のGNN説明可能性手法の概要と，その評価方法について述べる．
+    さらに、新しい評価指標を提案し、実世界のデータセットにおいてGNNの説明可能性手法を比較するための徹底的な実験を行う。
+    また、GNNの説明可能性に関する将来の方向性を提案する。}
+
+
+    \section{どういう論文？}
+    \begin{itemize}
+        \item 最新のGNN説明手法について、その概要と評価方法を俯瞰
+        \item 評価手法や評価用のデータセットを含む、最新のGNN説明可能性手法を批判
+        \item 新しい評価指標Explanation Confidence（説明一致度）を提案
+        \item 実世界データセットと複数アーキテクチャを用いて様々なGNN説明可能性手法を比較した実験結果を提示
+        \item 最後に、GNNの説明可能性に関する将来の方向性について議論
+    \end{itemize}
+
+
+    \section{先行研究と比べてどこがすごい？}
+    \begin{itemize}
+        \item GNN説明可能性に関する唯一のレビュー論文\cite{yuan2020explainability}は、実験的研究を欠いている。
+        GNN説明可能性の現在の最先端技術について、詳細な実験的評価を伴う批判的レビューを提示
+        \item 既存の評価指標は、グランドトゥルースと閾値に人間の知識が必要であり、特定のドメインでしか利用できない。実世界のほとんどのデータセットで比較できるようにするために、我々は人手を必要としない評価指標を提案する。
+        \item 既存の評価指標と我々の新しい評価指標に基づき、3つのcitationネットワークを用いて既存の説明可能性評価手法をベンチマークする。
+        \item 異なる集約関数と深い構造を持つ複数の高度なGNNモデルに対する異なる手法の説明可能性を実験的に研究している
+    \end{itemize}
+
+    \subsection{準備}
+    GNNExplainer\cite{ying2019gnnexplainer}
+    \begin{itemize}
+        \item GNNExplainerは入力グラフの摂動に基づきGNNを説明し、GNNの構造情報を利用する。
+        \item しかし、パラメータの大きさが入力グラフの大きさに比例するため、スケーラビリティの問題に悩まされる。
+        \item GNNExplainerはインスタンスレベルの説明しか提供しないため、事前予測のグローバルな理解に欠ける。
+    \end{itemize}
+
+    PGExplainer\ \cite{luo2020parameterized}
+    \begin{itemize}
+        \item GNNExplainerの最適化の枠組みを踏襲しつつ、エッジの重みをバイナリ変数から範囲(0, 1)の連続変数に緩和し、目的関数を勾配ベースの手法で効率的に最適化
+        \item 学習済みモデルが複数のインスタンスに対して行った予測をまとめて説明するため、GNNモデルの全体像を把握することができる
+        \item グラフ内の全てのエッジの重要度を予測するモデルを単独で用いることで、グラフサイズに依存しないパラメータサイズを実現し、計算効率を向上させることができる
+    \end{itemize}
+
+    GraphMask\ \cite{schlichtkrull2020interpreting}
+    \begin{itemize}
+        \item PGExpalinerと同様に、GraphMaskは学習されたGNNモデルのグローバルな理解を提供することができる。
+        \item 各層に異なるマスクを与えることで関連するパスを提供する。
+    \end{itemize}
+
+    PGM-Explainer\ \cite{vu2020pgm}
+    \begin{itemize}
+        \item PGM-Explainerは説明される特徴間の依存関係を図示することができる。
+        \item しかし、PGM-Explainerはインスタンスレベルの説明に限定され、
+        ベイジアンネットワークの学習過程は非常に計算量が多い。
+    \end{itemize}
+    SubgraphX\ \cite{yuan2021explainability}
+    \begin{itemize}
+        \item SubgraphXの欠点はPGM-Explainerと同様、インスタンスレベルの説明しか提供できず、
+        探索木のサイズが指数関数的に増大するため、大規模グラフに適用できないことである。
+    \end{itemize}
+
+    XGNN \ \cite{yuan2020xgnn}
+    \begin{itemize}
+        \item XGNNはノードの分類タスクには適用できない。
+        \item あるブラックボックスを使って別のブラックボックスを説明するというパラドックスに陥っている。
+    \end{itemize}
+
+    \subsection{評価方法}
+    Accuracy
+    \begin{itemize}
+        \item Accuracyはデータセットが人間が定義したグランドトゥルースの説明パターンを含む場合に使用される
+        \cite{ying2019gnnexplainer, luo2020parameterized, yuan2020xgnn, vu2020pgm}
+        \item 生成された説明がどれだけground truthに適合しているかを測定する:
+        \begin{equation}
+            \frac{|\mathbf{G} \mathbf{T} \cap \mathbf{E}|}{|\mathbf{E}|}
+        \end{equation}
+        \item $GT$はground truthの説明におけるエッジの集合であり、$E$は生成された説明におけるエッジの集合
+        \item accuracyは生成された説明のサイズに関係することに注意。
+        \item それゆえ、多くの場合、ユーザーはground truthの説明のサイズに基づいて密な説明を閾値する必要がある。
+        \item このため、データセットに対して人間が定義したground truthを必要とし、accuracyはほとんどの実世界のデータセットに適用できない。
+    \end{itemize}
+    \\
+    Sparsity and Fidelity
+    \begin{itemize}
+        \item Sparsity（スパース性、疎密性）は通常、Fidelity（忠実性）と組み合わされる。
+        \item Sparsityは元のグラフからどれだけ多くの冗長なエッジが削除されたかを測定する。
+        直感的に説明部分グラフは意思決定に必要なすべての情報を持つ最小の部分グラフであるべきなので、Sparsityが高い方が望ましい。
+        \begin{equation}
+            \text { Sparsity }=1-\frac{m}{M}
+        \end{equation}
+        \item $m$は重要な部分グラフのサイズ（すなわち、エッジの数）、$M$は元のグラフのサイズ
+        \item Fidelityは説明モデルが元のGNNモデルにどれだけ忠実であるかを測定する。
+        \begin{equation}
+            \begin{aligned}
+                \text { Fidelity }=& P(Y=c \mid G)-P\left(Y=c \mid G \backslash G_{S}\right), \\
+                & c=\underset{c \in C}{\arg \max } P(Y=c \mid G)
+            \end{aligned}
+        \end{equation}
+        \item $P$はモデルが出力する確率分布、$Y$は予測値、$G$は元のグラフ、$GS$は説明、$C$は全クラスの集合
+    \end{itemize}
+
+    \\
+    Inverse Fidelity（逆忠実度）\cite{schlichtkrull2020interpreting}
+    \begin{itemize}
+        \item 重要な部分グラフを用いたモデルのaccuracyと、元のグラフを用いたモデルのaccuracyを、テストセットに対するタスクで比較する
+        \begin{equation}
+            \text { InvFidelity }=\frac{1}{N} \sum_{N}^{i=1}\left( \1\left(\hat{y}_{i}^{\prime}=y_{i}\right)-\1\left(\hat{y}_{i}=y_{i}\right)\right)
+        \end{equation}
+        \item $y_i$はラベル、$N$はサンプル数、$\hat{y}_i$と$\hat{y}_i^\prime$は元のモデルと説明の予測値。
+        \item Inverse Fidelityはモデルの根本的な推論プロセスを理解することを動機としていて、Ground truthを必要としない。
+        そのため全てのタスクで適用可能。実世界タスクは多くの場合ground truthを利用できないから使えそう
+        \item 人間が定義したグランドトゥルースは、モデルがどのように推論するか既に分かっていれば説明する必要がないため、正しいことが保証されず、この指標は信頼性が低くなってしまう。
+        \item
+    \end{itemize}
+
+    \begin{itemize}
+        \item 説明可能性の評価はfaithfulness（忠実性） vs plausibility（もっともらしさ）
+        \item faithfulness: 説明がいかに正確にモデルの真の推論プロセスを反映しているか
+        \item plausibility: 説明が人間にとってどれだけ説得力があるか
+    \end{itemize}
+
+
+    \section{技術や方法のポイントはどこ？}
+    difficulty 1:
+    \begin{itemize}
+        \item ground truthを得られないタスクではfaithfulnessを評価できない
+        \item スパースサブグラフ以外の重要度スコアしか出力しない全ての説明可能性手法に対して、連続エッジの重要度スコアをバイナリ説明にスパース化する必要がある。
+        \item しかしスパース化に閾値を手動で設けるとなると、生成された説明の品質が保証されない。
+    \end{itemize}
+
+    difficulty 2:
+    \begin{itemize}
+        \item Sparsityを利用して、異なるsparsityを持つ説明を生成し、
+        そのfidelityを計算し、異なるスパース性の平均fidelityを得る
+        \item しかし、fidelityの範囲はサンプルやモデルによって大きく異なるため、
+        fidelityに基づいて異なるモデルに対する説明可能性手法の性能を直接比較することはできない。
+        \item さらに、我々が評価したいのは、重要でないエッジをできるだけ取り除きながら、元のモデルと同様の振る舞いをする説明モデルを見つける手法の能力であるが、
+        sparsityは説明の質を評価するのではなくエッジを取り除くことだけに着目しているため、
+        独立した評価項目として用いることができない。
+    \end{itemize}
+
+    Proposal:
+    \begin{itemize}
+        \item \textbf{explanation confidence: 説明適合性}を提案
+        \begin{equation}
+            \begin{gathered}
+                E C=1-\frac{\left|P(Y=c \mid G)-P\left(Y=c \mid G_{S}\right)\right|}{P(Y=c \mid G)} \\
+                c=\underset{c \in C}{\arg \max } P(Y=c \mid G) .
+            \end{gathered}
+        \end{equation}
+        \item 説明サブグラフとオリジナルグラフを用いた予測クラスの確率の差を、オリジナルグラフを用いた予測確率で正規化したもの
+        \item この値が高いほど、説明部分グラフがGNNモデルの実際の学習過程を反映していることを意味し、高い信頼性が得られる
+        \item 全てのサンプルとモデルで正規化されているため、独立変数として用いることができるため、異なる説明可能性手法の性能を直接比較することが可能である
+    \end{itemize}
+
+
+    \section{どうやって有効と検証した？}
+    現実的なシナリオで説明可能な方法を評価するために、我々はGNNのための最も一般的な標準引用ネットワークベンチマークを3つ選択する。
+    Cora [McCallum et al., 2000]、Citeseer [Giles et al., 1998]、Pubmed [Sen et al., 2008]の3つのデータセットである。
+    これらのデータセットでは、ノードは文書を表し、エッジは引用を表します。ノードは文書のbag-of-word表現の要素であり、各
+    ノードは特定のクラスに属している。
+    GCN、GAT、GCNIIモデルを用いた。
+    sparsityを縦軸、ECを横軸に取る集計で評価。
+
+    各説明手法の特徴を反映した結果を示した
+    \begin{itemize}
+        \item GraphMASKは、生成される説明がモデルの実際の推論過程に近いため、ECが高いほどSparsityを上回っている。
+        \item PGExplainerはGCNIIではGNNExplainerを上回った。
+        これはGNNExplainerはより多くのパラメータと深い構造を持つモデルの説明には不向きであることを示す。
+    \end{itemize}
+
+
+    \section{議論はある？}
+    \begin{itemize}
+        \item 問題の定義：GNNのみならずXAIに対して、より明確な定義が必要
+        \item 評価指標：グラフデータは可視化困難で理解しにくい。そのためタスク非依存な、わかりやすい定量的な評価指標が必要
+        \item 従来のグラフ理論に基づく：従来の手法は論理学や数学に基づいているため、GNNに基づく手法の説明とアルゴリズムに基づく手法の背後にある論理の関係を研究することは興味深いこと
+    \end{itemize}
+
+
+    \section{次に読むべき論文は？}
+    \begin{itemize}
+        \item GNNExplainer\ \cite{ying2019gnnexplainer}
+        \item PGExplainer\ \cite{luo2020parameterized}
+        \item GraphMask\ \cite{schlichtkrull2020interpreting}
+        \item PGM-Explainer\ \cite{vu2020pgm}
+        \item SubgraphX\ \cite{yuan2021explainability}
+        \item XGN\ \cite{yuan2020xgnn}
+    \end{itemize}
+
+    \bibliographystyle{apalike}
+    \bibliography{/Users/funami/Documents/Survey/ref}
+\end{document}
+
