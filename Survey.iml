@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/GNN_explanation/fig" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/origin_pdf" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
