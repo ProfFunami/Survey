@@ -1,7 +1,8 @@
 \documentclass[a4paper,10pt]{ltjsarticle}
 
 % プリアンブル
-\usepackage[dvipdfmx]{graphicx}
+\usepackage{graphicx}
+\usepackage{color}
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -92,20 +93,79 @@
 % Document
 \begin{document}
     \maketitle
-    \abstract{}
+    \abstract{
+        グラフニューラルネットワーク(GNN)は、グラフ上の機械学習のための強力なツールである。
+        GNNは入力グラフのエッジに沿って再帰的にニューラルメッセージを渡すことにより、
+        ノードの特徴情報とグラフ構造を結合する。
+        しかし、グラフ構造と特徴情報の両方を取り込むと複雑なモデルになり、
+        GNNによる予測を説明することは未解決である。本論文では、GNNEXPLAINERを提案する。
+        これは、あらゆるグラフベースの機械学習タスクにおいて、あらゆるGNNベースのモデルの予測に対して、
+        相互に予測可能な説明を提供する、初の一般的でモデルにとらわれないアプローチである。GNNEXPLAINERは
+        、GNNの予測に重要な役割を持つコンパクトな部分グラフ構造とノード特徴の小さなサブセットを特定する。さらに、
+        GNNEXPLAINERはインスタンスのクラス全体に対して一貫性のある簡潔な説明を生成することができる。我々はGNNEXPLAINERを、
+        GNNの予測と可能な部分グラフ構造の分布との間の相互情報を最大化する最適化タスクとして定式化する。合成グラフと実グラフを用いた実験により、
+        我々のアプローチはノードの特徴だけでなく、重要なグラフ構造も特定できることが示され、
+        説明精度において代替ベースラインアプローチを最大43.0\%上回ることが示された。
+        GNNEXPLAINERは、意味的に関連する構造を可視化する能力から、解釈可能性、欠陥のあるGNNのエラーに対する洞察に至るまで、様々な利益を提供する。
+    }
+
+
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=120mm]{fig/gnnexplainer_fig1}
+        \caption{
+            GNNEXPLAINER provides interpretable explanations for predictions made by any GNN model on
+            any graph-based machine learning task. Shown is a hypothetical node classification task where
+            a GNN model $\Phi$ is trained on a social interaction graph to predict future sport activities.
+            Given a trained GNN $\Phi$ and a prediction $\hat{y}_{i}$ $=$ "Basketball" for person $v_{i}$,
+            GNNEXPLAINER generates an explanation by identifying a small subgraph of the input graph together
+            with a small subset of node features (shown on the right) that are most influential for $\hat{y}_{i}$.
+            Examining explanation for $\hat{y}_{i}$, we see that many friends in one part of $v_{i}$ 's social circle
+            enjoy ball games, and so the GNN predicts that $v_{i}$ will like basketball. Similarly, examining
+            explanation for $\hat{y}_{j}$, we see that $v_{j}$ 's friends and friends of his friends enjoy water and
+            beach sports, and so the GNN predicts $\hat{y}_{j}=$ "Sailing."}
+    \end{figure}
 
 
     \section{どういう論文？}
     \cite{li2022explainability}: 「GNNExplainerは重要でないエッジ/ノードの特徴をマスクすることでGNNを説明することを提案した．具体的には、GNNExplainer は、個々のサンプルごとに入力グラフの学習可能なマスクを学習する。」
+    \begin{itemize}
+        \item GNNの予測を説明するためのアプローチであるGNNEXPLAINERを提案
+        \item 重要なサブグラフがGNNの予測との相互情報量を最大化するように最適化する
+        \item 重要でないエッジとノードがマスクされ、予測に重要なサブグラフが強調される
+        \item GNNのための最初の説明手法であると主張
+    \end{itemize}
 
 
     \section{先行研究と比べてどこがすごい？}
+    \begin{itemize}
+        \item CNN等のGNN以外のタイプのNNの説明手法は、グラフの本質である関係性情報を取り込む能力に欠けている。
+        GNNの予測の説明には、ノードの特徴だけでなく、グラフが提供する豊富な関係情報を活用することが必要である。
+    \end{itemize}
 
 
     \section{技術や方法のポイントはどこ？}
+    \begin{itemize}
+        \item GNNEXPLAINERは学習したGNNとその予測結果を入力にとり、
+        予測に最も影響を与えるノード特徴の小さなサブセットを持つ、入力グラフの小さなサブグラフの形式で説明を返す。
+        \item GNNEXPLAINERは説明を、GNNが学習したグラフ全体のリッチな部分グラフとして指定し、その部分グラフがGNNの予測との相互情報を最大化するようにする。
+        \item 結果、重要なグラフ経路を特定し、経路のエッジに沿って渡される関連ノードの特徴情報を強調できることを示す。
+    \end{itemize}
+    \begin{itemize}
+        \item モデルに依存せず、ノード分類、リンク予測、グラフ分類など、グラフに関するあらゆる機械学習タスクにおいて使える。
+        \item シングルインスタンス説明の場合、GNNEXPLAINERは1つの特定のインスタンス（すなわち、ノードラベル、新しいリンク、グラフレベルラベル）に
+        対するGNNの予測を説明し、
+        \item マルチインスタンス説明の場合、GNNEXPLAINERはインスタンスの集合（例えば、与えられたクラスのノード）を一貫して説明する説明を提供する。
+    \end{itemize}
 
 
     \section{どうやって有効と検証した？}
+    \begin{itemize}
+        \item GNNEXPLAINERを合成グラフと実世界のグラフで評価した
+        \item GNNEXPLAINERはGNNの予測に対して一貫性のある簡潔な説明を与える
+        \item 2つの実世界のデータセットを用いて、GNNの予測に影響を与える重要なグラフ構造とノードの特徴を頑健に識別することにより、GNNEXPLAINERがいかに重要なドメインの洞察を提供できるかを示す
+    \end{itemize}
 
 
     \section{議論はある？}
