@@ -89,7 +89,7 @@
 %!  3.結果(主として図)
 \title{GNNExplainer: Generating Explanations for Graph Neural Networks\cite{ying2019gnnexplainer}}
 \author{Zhitao Ying, Dylan Bourgeois, Jiaxuan You, Marinka Zitnik, Jure Leskovec}
-\date{\today}
+\date{2019 NeurIPS}
 % Document
 \begin{document}
     \maketitle
@@ -110,7 +110,14 @@
     }
 
 
-
+    \section{どういう論文？}
+    \cite{li2022explainability}: 「GNNExplainerは重要でないエッジ/ノードの特徴をマスクすることでGNNを説明することを提案した．具体的には、GNNExplainer は、個々のサンプルごとに入力グラフの学習可能なマスクを学習する。」
+    \begin{itemize}
+        \item GNNの予測を説明するためのアプローチであるGNNEXPLAINERを提案
+        \item 重要なサブグラフがGNNの予測との相互情報量を最大化するように最適化する
+        \item 重要でないエッジとノードがマスクされ、予測に重要なサブグラフが強調される
+        \item GNNのための最初の説明手法であると主張
+    \end{itemize}
     \begin{figure}[H]
         \centering
         \includegraphics[width=120mm]{fig/gnnexplainer_fig1}
@@ -128,21 +135,37 @@
     \end{figure}
 
 
-    \section{どういう論文？}
-    \cite{li2022explainability}: 「GNNExplainerは重要でないエッジ/ノードの特徴をマスクすることでGNNを説明することを提案した．具体的には、GNNExplainer は、個々のサンプルごとに入力グラフの学習可能なマスクを学習する。」
-    \begin{itemize}
-        \item GNNの予測を説明するためのアプローチであるGNNEXPLAINERを提案
-        \item 重要なサブグラフがGNNの予測との相互情報量を最大化するように最適化する
-        \item 重要でないエッジとノードがマスクされ、予測に重要なサブグラフが強調される
-        \item GNNのための最初の説明手法であると主張
-    \end{itemize}
-
-
     \section{先行研究と比べてどこがすごい？}
     \begin{itemize}
         \item CNN等のGNN以外のタイプのNNの説明手法は、グラフの本質である関係性情報を取り込む能力に欠けている。
         GNNの予測の説明には、ノードの特徴だけでなく、グラフが提供する豊富な関係情報を活用することが必要である。
+        \item 既存法
+        \begin{itemize}
+            \item 解釈可能な簡単なモデルに近似する手法\cite{ribeiro2016should, augasta2012reverse, lakkaraju2017interpretable, zilke2016deepred}
+            \item 勾配計算等で計算の重要な側面を識別する手法
+            \begin{itemize}
+                \item 特徴勾配\cite{erhan2009visualizing, zeiler2014visualizing}
+                \item 入力特徴に対するニューロンの寄与のback-propagation\cite{chen2018learning, shrikumar2017learning, sundararajan2017axiomatic}
+                \item 反実仮想[referenceが不審？]
+            \end{itemize}
+            \item
+        \end{itemize}
+        で生成されるsaliency maps（顕著性マップ）\cite{zeiler2014visualizing}はいくつかの事例で誤解を招く恐れが報告されており\cite{adebayo2018sanity}、
+        勾配飽和などの問題もある\cite{shrikumar2017learning, sundararajan2017axiomatic}
+        \item グラフの隣接行列のような離散的な入力において悪化する。勾配値が非常に大きくても非常に小さな区間しかないため。
+        \item GNN向きではない
     \end{itemize}
+
+    以下、よくわからなかった：
+    \begin{quotation}
+        最近のGNNモデルは注目メカニズムを介して解釈可能性を増大させる\cite{schlichtkrull2020interpreting, velivckovic2017graph, xie2018crystal}。
+        しかし、学習されたエッジの注目値は重要なグラフ構造を示すことができるが、その値は全てのノードに渡る予測に対して同じである。したがって、これは、あるエッジがあるノードのラベルを予測するためには不可欠であるが、他のノードのラベルを予測するためには不可欠でない多くのアプリケーションと矛盾する。さらに、これらのアプローチは特定のGNNアーキテクチャに限定されているか、グラフ構造とノードの特徴情報の両方を共同で考慮することで予測を説明することができない。
+    \end{quotation}
+    \\
+    \begin{quotation}
+        Finally, recent GNN models augment interpretability via attention mechanisms \cite{schlichtkrull2020interpreting, velivckovic2017graph, xie2018crystal}.
+        However, although the learned edge attention values can indicate important graph structure, the values are the same for predictions across all nodes. Thus, this contradicts with many applications where an edge is essential for predicting the label of one node but not the label of another node. Furthermore, these approaches are either limited to speciﬁc GNN architectures or cannot explain predictions by jointly considering both graph structure and node feature information.
+    \end{quotation}
 
 
     \section{技術や方法のポイントはどこ？}
@@ -158,20 +181,67 @@
         対するGNNの予測を説明し、
         \item マルチインスタンス説明の場合、GNNEXPLAINERはインスタンスの集合（例えば、与えられたクラスのノード）を一貫して説明する説明を提供する。
     \end{itemize}
+    \begin{itemize}
+        \item \item ノード$v$が与えられた時、GNNの予測$\hat{y}$に影響を与える重要なグラフ構造$G_s$と
+        ノードの特徴$X_s=\{x_j | v_j \in G_s\}$を識別する。重要性の概念を次のように相互情報量で定式化：
+        \begin{equation}
+            \max _{G_{S}} M I\left(Y,\left(G_{S}, X_{S}\right)\right)=H(Y)-H\left(Y \mid G=G_{S}, X=X_{S}\right)
+        \end{equation}
+        \item predicted label distribution $Y$. which can be expressed as follows:
+        \begin{equation}
+            H\left(Y \mid G=G_{S}, X=X_{S}\right)=-\mathbb{E}_{Y \mid G_{S}, X_{S}}\left[\log P_{\Phi}\left(Y \mid G=G_{S}, X=X_{S}\right)\right]
+        \end{equation}
+        \item 重要なサブグラフの隣接行列をfractional adjacency matrix（分数隣接行列？）として連続値に緩和。objectiveは次のように変形
+        \begin{equation}
+            \min _{\mathcal{G}} \mathbb{E}_{G_{S} \sim \mathcal{G}} H\left(Y \mid G=G_{S}, X=X_{S}\right)
+        \end{equation}
+        \item 凸の仮定により、Jensenの不等式は以下の上限を与える。
+        \begin{equation}
+            \min _{\mathcal{G}} H\left(Y \mid G=\mathbb{E}_{\mathcal{G}}\left[G_{S}\right], X=X_{S}\right)
+        \end{equation}
+        \item 実際には、ニューラルネットワークは複雑であるため、凸性の仮定は成立しないが、実験的に正則化を用いてこの目的を最小化すると、
+        質の高い説明に対応する局所最小が得られることが多いことが分かった。
+        \item $\mathbb{E}_{\mathcal{G}}$の推定のために、多変量ベルヌーイ分布に分解された$G$の表現
+        \begin{equation}
+            P_{\mathcal{G}}\left(G_{S}\right)=\prod_{(j, k) \in G_{c}} A_{S}[j, k]
+        \end{equation}
+        により、簡単に期待値を推定する
+        \item 最終的に計算効率の良い変形として以下を勾配降下法で最適化
+        \begin{equation}
+            \min _{M}-\sum_{c=1}^{C} \mathbb{1}[y=c] \log P_{\Phi}\left(Y=y \mid G=A_{S} \odot \sigma(M), X=X_{S}\right)
+        \end{equation}
+        \item where $M \in \mathbb{R}^{n \times n}$ denotes the mask that we need to learn,
+        $\odot$ denotes element-wise multiplication, and $\sigma$ denotes the sigmoid that maps the mask to $[0,1]^{n \times n}$.
+        \item Lastly, we remove low values in $M$ through thresholding and compute the element-wise multiplication of $\sigma(M)$ and $A_{c}$ to arrive at the explanation $G_{S}$ for GNN's prediction $\hat{y}$ at node $v$.
+    \end{itemize}
 
 
     \section{どうやって有効と検証した？}
     \begin{itemize}
         \item GNNEXPLAINERを合成グラフと実世界のグラフで評価した
         \item GNNEXPLAINERはGNNの予測に対して一貫性のある簡潔な説明を与える
-        \item 2つの実世界のデータセットを用いて、GNNの予測に影響を与える重要なグラフ構造とノードの特徴を頑健に識別することにより、GNNEXPLAINERがいかに重要なドメインの洞察を提供できるかを示す
+        \item 2つの実世界のデータセットを用いて、GNNの予測$\hat{y}$に影響を与える重要なグラフ構造$G_s$と
+        ノードの特徴$X_s=\{x_j | v_j \in G_s\}$を識別することにより、GNNEXPLAINERがいかに重要なドメインの洞察を提供できるかを示す
     \end{itemize}
 
 
     \section{議論はある？}
+    \begin{itemize}
+        \item 最適化におけるパラメータ数は、予測を説明することを目的としているノードvの計算グラフGcのサイズに依存するが、
+        計算グラフは一般に比較的小さいため、GNNEXPLAINERは入力グラフが大きくても効果的に説明を生成することが可能
+        \item
+        \begin{quotation}
+            GNNEXPLAINER can be applied to: Graph Convolutional Networks [21],
+            Gated Graph Sequence Neural Networks [26], Jumping Knowledge Networks [36], Attention Networks [33], Graph Networks [4], GNNs with various node aggregation schemes [7, 5, 18, 16, 40, 39, 35], Line-Graph NNs [8], position-aware GNN [42], and many other GNN architectures.
+        \end{quotation}
+    \end{itemize}
 
 
     \section{次に読むべき論文は？}
+    \begin{itemize}
+        \item 最近の論文から読んだ方が流れ掴めそうなので、\cite{vu2020pgm}
+        \item その次に\cite{yuan2021explainability}
+    \end{itemize}
 
 
     \bibliographystyle{apalike}
